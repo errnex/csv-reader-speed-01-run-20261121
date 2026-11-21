@@ -28,4 +28,21 @@ const cases = JSON.parse(readFileSync(join(INPUT_DIR, 'cases.json'), 'utf8')) as
 }[];
 const answers: unknown[] = [];
 for (const c of cases) answers.push(run(c.input));
-writeFileSync(join(OUTPUT_DIR, 'answers.json'), JSON.stringify(answers));
+const outPath = join(OUTPUT_DIR, 'answers.json');
+const outBytes = JSON.stringify(answers);
+writeFileSync(outPath, outBytes);
+
+// Verify the file we just wrote: it must parse as a JSON array holding
+// exactly one answer per case. A mismatch is a hard failure, not a
+// silent short output. The check reads the file back from disk, so it
+// catches a truncated or mistargeted write too.
+const written = JSON.parse(readFileSync(outPath, 'utf8')) as unknown[];
+if (!Array.isArray(written) || written.length !== cases.length) {
+  throw new Error(
+    `answers.json verification failed: expected ${cases.length} answers, ` +
+      `got ${Array.isArray(written) ? written.length : 'non-array'}`,
+  );
+}
+console.error(
+  `wrote ${written.length} answers, ${outBytes.length} bytes to ${outPath}`,
+);
